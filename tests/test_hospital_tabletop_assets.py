@@ -131,7 +131,7 @@ class HospitalTabletopAssetTests(unittest.TestCase):
         _load_room_randomizer_module("constants")
         placement_utils = _load_room_randomizer_module("placement_utils")
         default_state = torch.zeros((2, 13), dtype=torch.float32)
-        default_state[:, 3] = 1.0
+        default_state[:, 6] = 1.0
         result = placement_utils.build_root_state(
             pos=torch.zeros((2, 3), dtype=torch.float32),
             yaw_rad=torch.tensor([0.0, math.pi / 2], dtype=torch.float32),
@@ -142,7 +142,7 @@ class HospitalTabletopAssetTests(unittest.TestCase):
         )
         expected = torch.tensor(
             [
-                [0.70710678, 0.70710678, 0.0, 0.0],
+                [0.70710678, 0.0, 0.0, 0.70710678],
                 [0.5, 0.5, 0.5, 0.5],
             ],
             dtype=torch.float32,
@@ -208,7 +208,7 @@ class HospitalTabletopAssetTests(unittest.TestCase):
             "stiffness=600.0",
             "damping=8.0",
             "friction=0.0",
-            "self.sim.physx.enable_ccd = False",
+            "self.sim.physics.enable_ccd = False",
         ):
             self.assertIn(expected, self.config_source)
 
@@ -451,12 +451,12 @@ class HospitalTabletopAssetTests(unittest.TestCase):
     def test_ridgeback_uses_a_fixed_radius_rear_arc_and_faces_g1(self):
         constants = _load_room_randomizer_module("constants")
         placement = _load_room_randomizer_module("placement_utils")
-        self.assertEqual(len(constants.RIDGEBACK_STATIC_ARC_ANGLES), 14)
-        self.assertAlmostEqual(constants.RIDGEBACK_STATIC_ARC_RADIUS, 0.85)
-        self.assertAlmostEqual(constants.RIDGEBACK_STATIC_TIP_CLEARANCE_MAX, 0.10)
+        self.assertEqual(len(constants.RIDGEBACK_STATIC_ARC_ANGLES), 16)
+        self.assertAlmostEqual(constants.RIDGEBACK_STATIC_ARC_RADIUS, 0.78)
+        self.assertAlmostEqual(constants.RIDGEBACK_STATIC_TIP_CLEARANCE_MAX, 0.03)
         self.assertEqual(
             tuple(round(math.degrees(angle)) for angle in constants.RIDGEBACK_STATIC_ARC_ANGLES),
-            (-20, -15, 15, 20, -25, -30, -35, -40, -45, 25, 30, 35, 40, 45),
+            (-25, -30, -35, -40, -45, -50, -55, -60, 25, 30, 35, 40, 45, 50, 55, 60),
         )
         for index in range(len(constants.RIDGEBACK_STATIC_ARC_ANGLES)):
             with self.subTest(arc_index=index):
@@ -465,15 +465,15 @@ class HospitalTabletopAssetTests(unittest.TestCase):
                 self.assertAlmostEqual(radius, constants.RIDGEBACK_STATIC_ARC_RADIUS)
                 self.assertLessEqual(
                     constants.ridgeback_static_arc_tip_clearance(index),
-                    constants.RIDGEBACK_STATIC_TIP_CLEARANCE_MAX,
+                    constants.RIDGEBACK_STATIC_TIP_CLEARANCE_MAX + 1.0e-12,
                 )
                 self.assertAlmostEqual(
                     constants.ridgeback_static_arc_tip_clearance(index),
-                    0.10,
+                    0.03,
                 )
                 self.assertAlmostEqual(
-                    radius - constants.RIDGEBACK_BBOX.half_w - constants.ROBOT_BBOX.half_w,
-                    0.10,
+                    radius - constants.RIDGEBACK_BBOX.half_w - constants.RIDGEBACK_STATIC_G1_FOOT_TIP_RADIUS,
+                    0.03,
                 )
                 self.assertLessEqual(local_xy[0], 1.0e-9)
                 self.assertNotAlmostEqual(local_xy[1], 0.0)
@@ -485,7 +485,7 @@ class HospitalTabletopAssetTests(unittest.TestCase):
             "TABLE_POS = (-6.0, -7.5, -0.2)",
             "ROBOT_POS = (-5.9, -7.0, 0.76)",
             "RIDGEBACK_POS = (-6.190717, -6.201272, 0.0328)",
-            "RIDGEBACK_ROT = (0.5735764364, 0.0, 0.0, 0.8191520443)",
+            "RIDGEBACK_ROT = (0.0, 0.0, 0.8191520443, 0.5735764364)",
             'pill_bottle_t: RigidObjectCfg | None = _selected_hospital_prop_cfg(',
             'pill_bottle_v: RigidObjectCfg | None = _selected_hospital_prop_cfg(',
             'medical_bottle_a: RigidObjectCfg | None = _selected_hospital_prop_cfg(',

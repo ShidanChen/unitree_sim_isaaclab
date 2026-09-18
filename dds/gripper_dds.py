@@ -13,6 +13,26 @@ from unitree_sdk2py.idl.unitree_go.msg.dds_ import MotorCmds_, MotorStates_
 from unitree_sdk2py.idl.default import unitree_go_msg_dds__MotorCmd_, unitree_go_msg_dds__MotorState_
 from tools.data_convert import convert_to_joint_range, convert_to_gripper_range
 
+DEX1_OPEN_JOINT_POSITION = -0.02
+
+
+def _open_gripper_cmd() -> Dict[str, Any]:
+    return {
+        "positions": [DEX1_OPEN_JOINT_POSITION],
+        "velocities": [0.0],
+        "torques": [0.0],
+        "kp": [0.0],
+        "kd": [0.0],
+    }
+
+
+def open_gripper_command_pair() -> Dict[str, Any]:
+    return {
+        "left_gripper_cmd": _open_gripper_cmd(),
+        "right_gripper_cmd": _open_gripper_cmd(),
+    }
+
+
 class GripperDDS(DDSObject):
     """Gripper DDS communication class - singleton pattern
     
@@ -38,7 +58,7 @@ class GripperDDS(DDSObject):
             self.left_gripper_state.states.append(motor_state)
             self.right_gripper_state.states.append(motor_state)
         self._initialized = True
-        self.existing_data = {"left_gripper_cmd": {}, "right_gripper_cmd": {}}
+        self.existing_data = open_gripper_command_pair()
         # setup the shared memory
         self.setup_shared_memory(
             input_shm_name="isaac_gripper_state",  # read the state of the gripper from Isaac Lab
@@ -47,6 +67,11 @@ class GripperDDS(DDSObject):
             output_size=512,  # output the command to Isaac Lab
         )
         
+        if self.output_shm:
+            # Clear stale commands left in the persistent shared-memory segment.
+            # Without this, a previous close command can make a fresh sim boot
+            # with both Dex1 grippers already clenched.
+            self.output_shm.write_data(self.existing_data)
         print(f"[{self.node_name}] Gripper DDS node initialized")
     
     def setup_publisher(self) -> bool:

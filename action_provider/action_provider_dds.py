@@ -4,6 +4,11 @@ from action_provider.action_base import ActionProvider
 from typing import Optional
 import torch
 from dds.dds_master import dds_manager
+try:
+    from dds.gripper_dds import open_gripper_command_pair
+except Exception:
+    open_gripper_command_pair = None
+
 class DDSActionProvider(ActionProvider):
     """Action provider based on DDS"""
     
@@ -235,6 +240,10 @@ class DDSActionProvider(ActionProvider):
                 if gripper_cmd:
                     left_gripper_cmd = gripper_cmd.get('left_gripper_cmd', {})
                     right_gripper_cmd = gripper_cmd.get('right_gripper_cmd', {})
+                    if not left_gripper_cmd or not right_gripper_cmd:
+                        fallback = open_gripper_command_pair() if open_gripper_command_pair else {}
+                        left_gripper_cmd = left_gripper_cmd or fallback.get('left_gripper_cmd', {})
+                        right_gripper_cmd = right_gripper_cmd or fallback.get('right_gripper_cmd', {})
                     left_gripper_positions = left_gripper_cmd.get('positions', [])
                     right_gripper_positions = right_gripper_cmd.get('positions', [])
                     gripper_positions = right_gripper_positions + left_gripper_positions

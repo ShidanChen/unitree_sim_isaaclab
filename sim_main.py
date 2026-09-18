@@ -434,12 +434,13 @@ def main():
         getattr(args_cli, "headless", False)
         or ("Hospital" in args_cli.task and "Wholebody" in args_cli.task)
         or args_cli.task == "Isaac-PickPlace-Cylinder-G129-Dex1-Joint"
+        or args_cli.task == "Isaac-PickPlace-MedicineBottle-Hospital-G129-Dex1-Joint"
     )
     if not skip_duplicate_sim_reset:
         env.sim.reset()
     env.reset()
 
-    if not getattr(args_cli, "headless", False):
+    if not getattr(args_cli, "headless", False) and not getattr(args_cli, "meta_quest", False):
         try:
             robot_pos = env.scene["robot"].data.root_pos_w.torch[0, :3].tolist()
             eye = (robot_pos[0], robot_pos[1] - 3.0, robot_pos[2] + 0.9)
@@ -720,7 +721,9 @@ def main():
         print("\nuser interrupted program")
     
     except Exception as e:
+        import traceback
         print(f"\nprogram exception: {e}")
+        traceback.print_exc()
     
     finally:
         # clean up resources

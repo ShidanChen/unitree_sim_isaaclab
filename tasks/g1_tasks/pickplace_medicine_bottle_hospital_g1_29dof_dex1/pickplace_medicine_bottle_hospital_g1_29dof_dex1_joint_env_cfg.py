@@ -61,6 +61,8 @@ from tasks.utils.room_randomizer.room_events import (
 from tasks.utils.room_randomizer.constants import (
     BBox,
     RIDGEBACK_CONTAINER_RISER_HEIGHT,
+    RIDGEBACK_ROOT_YAW_OFFSET,
+    RIDGEBACK_STAGING_ROBOT_LOCAL,
     TablePropMeta,
     ridgeback_static_arc_pose,
 )
@@ -119,7 +121,7 @@ RIDGEBACK_DISABLED_PRIM_NAMES = {
 # counter-transformed in base_link so they keep their original world pose
 # relative to G1 and the room.
 RIDGEBACK_BODY_YAW_OFFSET = torch.pi
-CRATE_LOCAL_ROT = (0.7046465942, 0.0, 0.0, 0.7095584382)
+CRATE_LOCAL_ROT = (0.0, 0.0, 0.7095584382, 0.7046465942)
 CRATE_RISER_SIZE = (0.46, 0.35, RIDGEBACK_CONTAINER_RISER_HEIGHT)
 RIDGEBACK_BODY_COLOR = (0.15, 0.15, 0.15)
 # The original crate floor was at 28.576 cm above Ridgeback's base_link.  The
@@ -590,34 +592,30 @@ def _selected_hospital_prop_cfg(
 # ----------------------------------------------------------------------------
 TABLE_POS = (-6.0, -7.5, -0.2)          # TUNE: open interior of new_base_room.usda
 ROBOT_POS = (-5.9, -7.0, 0.76)          # +Y of table by 0.5 m, same as warehouse
-ROBOT_ROT = (0.7071, 0.0, 0.0, -0.7071)  # yaw -90deg, robot faces the table
+ROBOT_ROT = (0.0, 0.0, -0.7071, 0.7071)  # Isaac Lab 3 xyzw yaw -90deg; robot faces the table
 
 # The first spawn is 20 degrees off G1's rear centre.  At the calibrated
 # 10 cm edge gap, the next 5-degree points touch the packing table, while the
 # rear-centre points remain no-spawn positions.
 RIDGEBACK_POS = (-6.190717, -6.201272, 0.0328)
-RIDGEBACK_ROT = (0.5735764364, 0.0, 0.0, 0.8191520443)
+RIDGEBACK_ROT = (0.0, 0.0, 0.8191520443, 0.5735764364)
 RIDGEBACK_ARC_BBOX = BBox(half_w=0.50, half_d=0.42)
 
 
 def _next_static_logistics_cluster(env) -> tuple[StaticClusterMember, ...]:
-    """Cycle one crate-carrying Ridgeback through the equal-radius rear arc."""
-    previous_index = getattr(env, "_hospital_ridgeback_arc_index", None)
-    if previous_index is None:
-        index = 0  # left-rear point: close to G1 without directly trailing it
-    else:
-        index = previous_index + 1
-    env._hospital_ridgeback_arc_index = index
-    robot_local_xy, yaw_offset = ridgeback_static_arc_pose(index)
+    """Place the visible hospital Ridgeback in the room, clear of G1/table.
+
+    The shared waiting pose falls just outside the authored hospital shell for
+    this fixed layout. Use the left staging pose instead; the room randomizer
+    validates it as inside-room and non-overlapping.
+    """
     return (
         StaticClusterMember(
             asset_name="ridgeback",
-            robot_local_xy=robot_local_xy,
-            yaw_offset=yaw_offset + float(RIDGEBACK_BODY_YAW_OFFSET),
-            # The requested full arc deliberately includes points that may
-            # overlap the table/G1 OBB proxies.
+            robot_local_xy=RIDGEBACK_STAGING_ROBOT_LOCAL,
+            yaw_offset=RIDGEBACK_ROOT_YAW_OFFSET,
             bbox=RIDGEBACK_ARC_BBOX,
-            allow_protected_overlap=True,
+            allow_protected_overlap=False,
         ),
     )
 HAND_REACHABLE_TABLETOP_REGION = TabletopSpawnRegion(
@@ -728,21 +726,31 @@ def reset_hospital_tabletop_props(env) -> None:
     )
 
 
-def _yaw_from_quaternion_wxyz(quaternion: torch.Tensor) -> torch.Tensor:
-    """Return one planar yaw angle per scalar-first quaternion."""
-    w, x, y, z = quaternion.unbind(dim=-1)
+def _yaw_from_quaternion_xyzw(quaternion: torch.Tensor) -> torch.Tensor:
+    """Return one planar yaw angle per Isaac Lab 3.0 ``(x, y, z, w)`` quaternion."""
+    x, y, z, w = quaternion.unbind(dim=-1)
     return torch.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 
 def reset_hospital_ridgeback_arc(env) -> None:
     """Move only the hospital Ridgeback to the next requested arc point."""
     env_ids = torch.arange(env.num_envs, device=env.device)
-    (member,) = _next_static_logistics_cluster(env)
+    previous_index = getattr(env, "_hospital_ridgeback_arc_index", None)
+    index = 0 if previous_index is None else previous_index + 1
+    env._hospital_ridgeback_arc_index = index
+    robot_local_xy, yaw_offset = ridgeback_static_arc_pose(index)
+    member = StaticClusterMember(
+        asset_name="ridgeback",
+        robot_local_xy=robot_local_xy,
+        yaw_offset=yaw_offset + float(RIDGEBACK_BODY_YAW_OFFSET),
+        bbox=RIDGEBACK_ARC_BBOX,
+        allow_protected_overlap=True,
+    )
     robot = env.scene["robot"]
     ridgeback = env.scene[member.asset_name]
     origins = env.scene.env_origins
     robot_positions = robot.data.root_pos_w[env_ids] - origins[env_ids]
-    robot_yaws = _yaw_from_quaternion_wxyz(robot.data.root_quat_w[env_ids])
+    robot_yaws = _yaw_from_quaternion_xyzw(robot.data.root_quat_w[env_ids])
     ridgeback_positions = offset_from_yaw_batched(
         robot_positions,
         robot_yaws,

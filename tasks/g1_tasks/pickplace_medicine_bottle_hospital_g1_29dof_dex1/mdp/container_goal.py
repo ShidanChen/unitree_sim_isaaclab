@@ -81,6 +81,14 @@ def quaternion_conjugate(quaternion: torch.Tensor) -> torch.Tensor:
     return result
 
 
+def _root_quat_wxyz(asset_data_quat) -> torch.Tensor:
+    """Convert an Isaac Lab 3.0 (x, y, z, w) root/body quaternion (possibly a
+    Warp-backed ProxyArray) to the scalar-first (w, x, y, z) tensor this
+    module's quaternion_* helpers expect."""
+    quat = asset_data_quat.torch if hasattr(asset_data_quat, "torch") else asset_data_quat
+    return quat[..., [3, 0, 1, 2]]
+
+
 def points_in_oriented_crate(
     points_w: torch.Tensor,
     parent_positions_w: torch.Tensor,
@@ -125,7 +133,7 @@ def important_objects_contained(env) -> torch.Tensor:
             env.num_envs, 3
         )
         center_w = object_asset.data.root_pos_w + quaternion_apply(
-            object_asset.data.root_quat_w, local_center
+            _root_quat_wxyz(object_asset.data.root_quat_w), local_center
         )
 
         bin_results = []
@@ -140,7 +148,7 @@ def important_objects_contained(env) -> torch.Tensor:
                 points_in_oriented_crate(
                     center_w,
                     ridgeback.data.root_pos_w,
-                    ridgeback.data.root_quat_w,
+                    _root_quat_wxyz(ridgeback.data.root_quat_w),
                     crate_position,
                     crate_orientation,
                 )

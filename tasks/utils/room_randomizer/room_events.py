@@ -1279,7 +1279,9 @@ def _place_table_group(
     selected_layout_names = ["none" for _ in range(M)]
     desk_asset = env.scene["packing_table"]
     robot_asset = env.scene["robot"]
-    include_ridgeback = "ridgeback" in env.scene.keys()
+    include_ridgeback = "ridgeback" in env.scene.keys() and all(
+        member.asset_name != "ridgeback" for member in static_cluster_members
+    )
     allowed_protected_overlap_names = frozenset(
         member.asset_name
         for member in static_cluster_members

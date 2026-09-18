@@ -19,7 +19,7 @@ from tools.medical_object_catalog import (
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 SELECTOR_PATH = REPO_ROOT / "tools/select_table_objects.py"
-MEDICAL_OBJECTS_USDA = Path("/home/vilmos/isaac-sim/isaac-projects/new_base_room.usda")
+MEDICAL_OBJECTS_USDA = REPO_ROOT / "isaac-projects/new_base_room.usda"
 LAUNCHER_PATH = REPO_ROOT / "tools/start_redblocks_meta_quest.sh"
 HOSPITAL_CONFIG_PATH = (
     REPO_ROOT
