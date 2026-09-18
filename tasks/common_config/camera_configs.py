@@ -30,7 +30,7 @@ class CameraBaseCfg:
         horizontal_aperture: float = 20.0,
         clipping_range: tuple = (0.1, 1.0e5),
         pos_offset: tuple = (0, 0.0, 0),
-        rot_offset: tuple = (0.5, -0.5, 0.5, -0.5),
+        rot_offset: tuple = (-0.5, 0.5, -0.5, 0.5),
         data_types: list = None
     ) -> CameraCfg:
         """get the front camera configuration
@@ -96,7 +96,7 @@ class CameraPresets:
         """front camera configuration"""
         return CameraBaseCfg.get_camera_config(prim_path="/World/envs/env_.*/Robot/d435_link/PerspectiveCamera_robot",
                                                     pos_offset=(-0.9, 0.0, 0.0),
-                                                    rot_offset=( -0.51292,0.51292,-0.48674, 0.48674),
+                                                    rot_offset=(0.51292, -0.48674, 0.48674, -0.51292),
                                                     focal_length = 12,
                                                     horizontal_aperture=27)
     @classmethod
@@ -104,7 +104,7 @@ class CameraPresets:
         """front camera configuration"""
         return CameraBaseCfg.get_camera_config(prim_path="/World/envs/env_.*/Robot/camera_link/PerspectiveCamera_robot",
                                                     pos_offset=(-0.9, 0.0, 0.0),
-                                                    rot_offset=( -0.51292,0.51292,-0.48674, 0.48674),
+                                                    rot_offset=(0.51292, -0.48674, 0.48674, -0.51292),
                                                     focal_length = 12,
                                                     horizontal_aperture=27)
     @classmethod
@@ -121,7 +121,7 @@ class CameraPresets:
             horizontal_aperture=20.0,
             clipping_range=(0.1, 1.0e5),
             pos_offset=(0.02541028, 0.045, 0.135),
-            rot_offset=(-0.34202, 0.93969, 0, 0),
+            rot_offset=(0.93969, 0, 0, -0.34202),
         )
     @classmethod
     def right_gripper_wrist_camera(cls) -> CameraCfg:
@@ -137,7 +137,7 @@ class CameraPresets:
             horizontal_aperture=20.0,
             clipping_range=(0.1, 1.0e5),
             pos_offset=(-0.02541028, 0.045, 0.135),
-            rot_offset=(-0.34202, 0.93969, 0, 0),
+            rot_offset=(0.93969, 0, 0, -0.34202),
         ) 
     @classmethod
     def left_dex3_wrist_camera(cls) -> CameraCfg:
@@ -153,7 +153,7 @@ class CameraPresets:
             horizontal_aperture=20.0,
             clipping_range=(0.1, 1.0e5),
             pos_offset=(-0.04012, -0.07441 ,0.15711),
-            rot_offset=(0.00539,0.86024,0.0424, 0.50809),
+            rot_offset=(0.86024, 0.0424, 0.50809, 0.00539),
         )
     @classmethod
     def right_dex3_wrist_camera(cls) -> CameraCfg:
@@ -169,7 +169,7 @@ class CameraPresets:
             horizontal_aperture=20.0,
             clipping_range=(0.1, 1.0e5),
             pos_offset=(-0.04012, 0.07441 ,0.15711),
-            rot_offset=(0.00539,0.86024,0.0424, 0.50809),
+            rot_offset=(0.86024, 0.0424, 0.50809, 0.00539),
         ) 
     
     @classmethod
@@ -186,7 +186,7 @@ class CameraPresets:
             horizontal_aperture=20.0,
             clipping_range=(0.1, 1.0e5),
             pos_offset=(-0.04012, -0.07441 ,0.15711),
-            rot_offset=(0.00539,0.86024,0.0424, 0.50809),
+            rot_offset=(0.86024, 0.0424, 0.50809, 0.00539),
         )
     @classmethod
     def right_inspire_wrist_camera(cls) -> CameraCfg:
@@ -202,5 +202,5 @@ class CameraPresets:
             horizontal_aperture=20.0,
             clipping_range=(0.1, 1.0e5),
             pos_offset=(-0.04012, 0.07441 ,0.15711),
-            rot_offset=(0.00539,0.86024,0.0424, 0.50809),
+            rot_offset=(0.86024, 0.0424, 0.50809, 0.00539),
         ) 

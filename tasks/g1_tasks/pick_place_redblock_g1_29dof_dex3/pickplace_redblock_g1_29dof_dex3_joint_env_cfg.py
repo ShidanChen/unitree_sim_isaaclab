@@ -23,6 +23,7 @@ from . import mdp
 from tasks.common_config import  G1RobotPresets, CameraPresets  # isort: skip
 # import public scene configuration
 from isaaclab.assets import RigidObjectCfg
+from isaaclab_physx.physics import PhysxCfg
 from tasks.common_scene.base_scene_randomized_pickplace_cfg import (
     RandomizedRoomPickPlaceSceneCfg,
     tabletop_cube_cfg,
@@ -49,14 +50,14 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
     
     object = RigidObjectCfg(
         prim_path="/World/envs/env_.*/Object",
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.35, 0.40, 0.84), rot=(1, 0, 0, 0)),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.35, 0.40, 0.84), rot=(0, 0, 0, 1)),
         spawn=tabletop_cube_cfg((1.0, 0.0, 0.0)),
     )
 
     # Humanoid robot w/ arms higher
     # 5. humanoid robot configuration 
     robot: ArticulationCfg = G1RobotPresets.g1_29dof_dex3_base_fix(init_pos=(-4.2, -3.7, 0.76),
-        init_rot=(0.7071, 0, 0, -0.7071))
+        init_rot=(0, 0, -0.7071, 0.7071))
 
 
     # 6. add camera configuration 
@@ -168,16 +169,18 @@ class PickPlaceG129DEX3BaseFixEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 32 * 1024
-        self.sim.physx.friction_correlation_distance = 0.003
-        self.sim.physx.enable_ccd = True
-        self.sim.physx.gpu_constraint_solver_heavy_spring_enabled = True
-        self.sim.physx.num_substeps = 4
-        self.sim.physx.contact_offset = 0.01
-        self.sim.physx.rest_offset = 0.001
-        self.sim.physx.num_position_iterations = 16
-        self.sim.physx.num_velocity_iterations = 4
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 32 * 1024
+        self.sim.physics.friction_correlation_distance = 0.003
+        self.sim.physics.enable_ccd = True
+        self.sim.physics.gpu_constraint_solver_heavy_spring_enabled = True
+        self.sim.physics.num_substeps = 4
+        self.sim.physics.contact_offset = 0.01
+        self.sim.physics.rest_offset = 0.001
+        self.sim.physics.num_position_iterations = 16
+        self.sim.physics.num_velocity_iterations = 4
 
         register_randomized_room_reset_events(self)

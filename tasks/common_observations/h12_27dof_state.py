@@ -148,9 +148,9 @@ def get_robot_boy_joint_states(
         - the last 29 elements are joint torques
     """
     # get all joint states
-    joint_pos = env.scene["robot"].data.joint_pos
-    joint_vel = env.scene["robot"].data.joint_vel
-    joint_torque = env.scene["robot"].data.applied_torque  # use applied_torque to get joint torques
+    joint_pos = env.scene["robot"].data.joint_pos.torch
+    joint_vel = env.scene["robot"].data.joint_vel.torch
+    joint_torque = env.scene["robot"].data.applied_torque.torch  # use applied_torque to get joint torques
     device = joint_pos.device
     batch = joint_pos.shape[0]
 
@@ -370,8 +370,9 @@ def get_robot_imu_data(env, use_torso_imu: bool = True, quat_w_first: bool = Non
     # subtract gravity (proper acceleration in world frame)
     a_world_corrected = a_world - g_world  # [B,3]
 
-    # prepare quaternion in (w,x,y,z)
-    quat_wxyz = ensure_quat_w_first(quat, assume_w_first=True)
+    # prepare quaternion in (w,x,y,z). Isaac Lab 3.0 stores root/body state
+    # orientation as (x,y,z,w), so the raw input here is NOT already w-first.
+    quat_wxyz = ensure_quat_w_first(quat, assume_w_first=False)
 
     # build rotation matrices R_body->world ; to convert world->body use R^T
     R_body_to_world = quat_to_rot_matrix(quat_wxyz)  # [B,3,3]

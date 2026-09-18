@@ -191,7 +191,9 @@ def build_root_state(
             dim=-1,
         )
         quat = quat / torch.linalg.vector_norm(quat, dim=-1, keepdim=True).clamp_min(1.0e-12)
-    state[:, 3:7] = quat
+    # quat is computed internally as (w, x, y, z); Isaac Lab 3.0's root state
+    # orientation slice expects (x, y, z, w), so reorder before writing.
+    state[:, 3:7] = quat[:, [1, 2, 3, 0]]
     state[:, 7:] = 0.0
 
     return state

@@ -41,6 +41,7 @@ from isaaclab.managers import ObservationTermCfg as ObsTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.utils import configclass
+from isaaclab_physx.physics import PhysxCfg
 
 from . import mdp
 from tasks.common_config import CameraBaseCfg, CameraPresets, G1RobotPresets  # isort: skip
@@ -548,7 +549,7 @@ def _hospital_prop_cfg(
         prim_path=prim_path,
         init_state=RigidObjectCfg.InitialStateCfg(
             pos=(init_xy[0], init_xy[1], init_z),
-            rot=(1.0, 0.0, 0.0, 0.0),
+            rot=(0.0, 0.0, 0.0, 1.0),
         ),
         spawn=GraspableHospitalUsdFileCfg(
             usd_path=spec.usd_path,
@@ -958,7 +959,7 @@ class HospitalMedicineBottleSceneCfg(RandomizedRoomPickPlaceSceneCfg):
     world_camera = CameraBaseCfg.get_camera_config(
         prim_path="/World/PerspectiveCamera",
         pos_offset=(-5.8, -8.2, 1.8),       # TUNE: GUI-only viewpoint
-        rot_offset=(-0.3173, 0.94833, 0.0, 0.0),
+        rot_offset=(0.94833, 0.0, 0.0, -0.3173),
     )
 
     # These authored desk props are outside /World/MedicalObjects.
@@ -1033,23 +1034,25 @@ class PickPlaceMedicineBottleHospitalG129DEX1EnvCfg(ManagerBasedRLEnvCfg):
         self.episode_length_s = 20.0
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 32 * 1024
-        self.sim.physx.friction_correlation_distance = 0.00625
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 32 * 1024
+        self.sim.physics.friction_correlation_distance = 0.00625
         # GPU rigid-body CCD is unsupported in this Isaac Sim configuration;
         # bounded jaw velocity and convex-decomposed contacts prevent tunneling.
-        self.sim.physx.enable_ccd = False
-        self.sim.physx.gpu_constraint_solver_heavy_spring_enabled = True
-        self.sim.physx.num_substeps = 2
+        self.sim.physics.enable_ccd = False
+        self.sim.physics.gpu_constraint_solver_heavy_spring_enabled = True
+        self.sim.physics.num_substeps = 2
         # The scored props are about 27--29 mm across. A 15 mm contact skin
         # made opposing jaw contacts appear far too early and injected large
         # depenetration impulses.  Keep the broad default and the task-local
         # finger/object offsets in the low-millimetre range.
-        self.sim.physx.contact_offset = 0.003
-        self.sim.physx.rest_offset = 0.0
-        self.sim.physx.num_position_iterations = 16
-        self.sim.physx.num_velocity_iterations = 4
+        self.sim.physics.contact_offset = 0.003
+        self.sim.physics.rest_offset = 0.0
+        self.sim.physics.num_position_iterations = 16
+        self.sim.physics.num_velocity_iterations = 4
 
         # Custom event manager (matches the warehouse manipulation task).
         self.event_manager = SimpleEventManager()

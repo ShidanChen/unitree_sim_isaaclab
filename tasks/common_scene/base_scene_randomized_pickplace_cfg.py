@@ -13,7 +13,7 @@ from isaaclab.sim import schemas
 from isaaclab.sim.spawners.from_files import from_files as file_spawners
 from isaaclab.sim.utils import clone, get_current_stage
 from isaaclab.utils import configclass
-from isaaclab.utils.assets import check_usd_path_with_timeout
+from isaaclab.utils.assets import check_file_path
 
 from tasks.common_config import CameraBaseCfg
 from tasks.utils.room_randomizer.constants import ASSET_PATHS, ROOM_SHELL_USD, FLOOR_Z, DESK_OBJECT_Z, DESK_LAMP_Z
@@ -73,7 +73,7 @@ def _spawn_real_rigid_usd(
     if cfg.rigid_props is None:
         raise ValueError("_spawn_real_rigid_usd requires cfg.rigid_props.")
 
-    if not check_usd_path_with_timeout(cfg.usd_path):
+    if not check_file_path(cfg.usd_path):
         raise FileNotFoundError(f"USD file not found at path: '{cfg.usd_path}'.")
 
     spawn_cfg = cfg.copy()
@@ -164,7 +164,7 @@ class RandomizedRoomPickPlaceSceneCfg(InteractiveSceneCfg):
     # Target Object (cylinder as default, overwritten by task if needed)
     object = RigidObjectCfg(
         prim_path="/World/envs/env_.*/Object",
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.35, 0.40, 0.84), rot=(1, 0, 0, 0)),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.35, 0.40, 0.84), rot=(0, 0, 0, 1)),
         spawn=sim_utils.CylinderCfg(
             radius=0.018,
             height=0.35,
@@ -253,19 +253,19 @@ class RandomizedRoomPickPlaceSceneCfg(InteractiveSceneCfg):
     blue_cube = RigidObjectCfg(
         prim_path="/World/envs/env_.*/BlueCube",
         spawn=tabletop_cube_cfg((0.0, 0.2, 1.0)),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(-7.1, -7.4, DESK_OBJECT_Z), rot=(1, 0, 0, 0)),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(-7.1, -7.4, DESK_OBJECT_Z), rot=(0, 0, 0, 1)),
     )
 
     yellow_cube = RigidObjectCfg(
         prim_path="/World/envs/env_.*/YellowCube",
         spawn=tabletop_cube_cfg((1.0, 1.0, 0.0)),
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(-7.0, -7.6, DESK_OBJECT_Z), rot=(1, 0, 0, 0)),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(-7.0, -7.6, DESK_OBJECT_Z), rot=(0, 0, 0, 1)),
     )
 
     # Cameras
     world_camera = CameraBaseCfg.get_camera_config(
         prim_path="/World/PerspectiveCamera",
         pos_offset=(-7.3, -8.2, 1.8),
-        rot_offset=(-0.3173, 0.94833, 0.0, 0.0),
+        rot_offset=(0.94833, 0.0, 0.0, -0.3173),
         focal_length=16.5,
     )

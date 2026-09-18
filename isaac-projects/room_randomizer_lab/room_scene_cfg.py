@@ -13,7 +13,7 @@ import isaaclab.sim as sim_utils
 from isaaclab.sim import schemas
 from isaaclab.sim.spawners.from_files import from_files as file_spawners
 from isaaclab.sim.utils import clone, get_current_stage
-from isaaclab.utils.assets import check_usd_path_with_timeout
+from isaaclab.utils.assets import check_file_path
 from pxr import PhysxSchema, Usd, UsdGeom, UsdPhysics
 
 from .constants import ASSET_PATHS, DESK_OBJECT_Z, FLOOR_Z, ROBOT_Z
@@ -73,7 +73,7 @@ def _spawn_real_rigid_usd(
     if cfg.rigid_props is None:
         raise ValueError("_spawn_real_rigid_usd requires cfg.rigid_props.")
 
-    if not check_usd_path_with_timeout(cfg.usd_path):
+    if not check_file_path(cfg.usd_path):
         raise FileNotFoundError(f"USD file not found at path: '{cfg.usd_path}'.")
 
     spawn_cfg = cfg.copy()
@@ -250,7 +250,7 @@ class RoomSceneCfg(InteractiveSceneCfg):
         ),
         offset=CameraCfg.OffsetCfg(
             pos=(-5.5, -9.1, 16.8),
-            rot=(0.7071068, 0.0, 0.7071068, 0.0),  # look down
+            rot=(0.0, 0.7071068, 0.0, 0.7071068),  # look down
             convention="world",
         ),
     )

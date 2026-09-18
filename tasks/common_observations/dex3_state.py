@@ -99,9 +99,9 @@ def get_robot_dex3_joint_states(
         torch.Tensor
     """
     # get the gripper joint positions, velocities, torques
-    joint_pos = env.scene["robot"].data.joint_pos
-    joint_vel = env.scene["robot"].data.joint_vel  
-    joint_torque = env.scene["robot"].data.applied_torque
+    joint_pos = env.scene["robot"].data.joint_pos.torch
+    joint_vel = env.scene["robot"].data.joint_vel.torch
+    joint_torque = env.scene["robot"].data.applied_torque.torch
     device = joint_pos.device
     batch = joint_pos.shape[0]
     

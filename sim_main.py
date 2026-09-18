@@ -105,6 +105,12 @@ try:
 except MetaQuestConfigurationError as exc:
     parser.error(str(exc))
 
+# Isaac Lab 3.0 removed --enable_cameras from AppLauncher's own CLI args (it must now be
+# supplied as a launcher_args attribute/kwarg instead); default it on since every documented
+# task invocation for this project relies on camera sensors.
+if not hasattr(args_cli, "enable_cameras"):
+    args_cli.enable_cameras = True
+
 if meta_quest_profile is not None:
     print(
         "[Meta Quest] enabled cameras, ZMQ video, "
@@ -288,11 +294,11 @@ def main():
 
         try:
             if args_cli.solver_iterations is not None:
-                env.sim.physx.solver_iteration_count = int(args_cli.solver_iterations)
-                print(f"[sim] solver_iteration_count={env.sim.physx.solver_iteration_count}")
+                env.sim.cfg.physics.solver_iteration_count = int(args_cli.solver_iterations)
+                print(f"[sim] solver_iteration_count={env.sim.cfg.physics.solver_iteration_count}")
             if args_cli.physx_substeps is not None:
                 try:
-                    env.sim.physx.substeps = int(args_cli.physx_substeps)
+                    env.sim.cfg.physics.substeps = int(args_cli.physx_substeps)
                 except Exception:
                     try:
                         env.sim.set_substeps(int(args_cli.physx_substeps))
@@ -301,8 +307,8 @@ def main():
                 print(f"[sim] physx_substeps set to {args_cli.physx_substeps}")
             if args_cli.gravity_z is not None:
                 g = float(args_cli.gravity_z)
-                env.sim.physx.gravity = (0.0, 0.0, g)
-                print(f"[sim] gravity set to {env.sim.physx.gravity}")
+                env.sim.cfg.physics.gravity = (0.0, 0.0, g)
+                print(f"[sim] gravity set to {env.sim.cfg.physics.gravity}")
         except Exception as e:
             print(f"[sim] failed to set physx params: {e}")
         if args_cli.skip_cvtcolor:
@@ -368,7 +374,9 @@ def main():
             print(f"[Quest recording] unavailable: {e}", flush=True)
             camera_recorder = None
     except Exception as e:
+        import traceback
         print(f"\nFailed to create environment: {e}")
+        traceback.print_exc()
         return
     
     # get robot stiffness and damping parameters from runtime environment
@@ -430,7 +438,17 @@ def main():
     if not skip_duplicate_sim_reset:
         env.sim.reset()
     env.reset()
-    
+
+    if not getattr(args_cli, "headless", False):
+        try:
+            robot_pos = env.scene["robot"].data.root_pos_w.torch[0, :3].tolist()
+            eye = (robot_pos[0], robot_pos[1] - 3.0, robot_pos[2] + 0.9)
+            target = (robot_pos[0], robot_pos[1], robot_pos[2] + 0.9)
+            env.sim.set_camera_view(eye=eye, target=target)
+            print(f"[sim] interactive viewport camera framed on robot at {robot_pos} (post-reset)")
+        except Exception as e:
+            print(f"[sim] failed to frame viewport camera: {e}")
+
     # create simplified control configuration
     try:    
         control_config = ControlConfig(

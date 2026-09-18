@@ -99,7 +99,7 @@ class TablePickRedblockIntoDrawerSceneCfg(InteractiveSceneCfg): # inherit from t
         ),
         init_state=ArticulationCfg.InitialStateCfg(
             pos=(-2.5,-4.35,0.45),
-            rot=(0.7071, 0, 0, 0.7071),
+            rot=(0, 0, 0.7071, 0.7071),
             joint_pos={
                 "door_left_joint": 0.0,
                 "door_right_joint": 0.0,
@@ -136,7 +136,7 @@ class TablePickRedblockIntoDrawerSceneCfg(InteractiveSceneCfg): # inherit from t
                 name="drawer_handle_bottom",
                 offset=OffsetCfg(
                     pos=(0.305, 0.0, 0.01),
-                    rot=(0.5, 0.5, -0.5, -0.5),  # align with end-effector frame
+                    rot=(0.5, -0.5, -0.5, 0.5),  # align with end-effector frame
                 ),
             ),
         ],
@@ -160,6 +160,6 @@ class TablePickRedblockIntoDrawerSceneCfg(InteractiveSceneCfg): # inherit from t
 
     world_camera = CameraBaseCfg.get_camera_config(prim_path="/World/PerspectiveCamera",
                                                     pos_offset=(-2.5, -4.8, 1.8),
-                                                    rot_offset=( -0.3173,0.94833, 0.0, 0.0))
+                                                    rot_offset=(0.94833, 0.0, 0.0, -0.3173))
 
 

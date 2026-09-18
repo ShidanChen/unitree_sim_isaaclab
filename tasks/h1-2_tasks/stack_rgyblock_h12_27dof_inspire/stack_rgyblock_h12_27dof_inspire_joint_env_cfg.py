@@ -16,6 +16,7 @@ from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.utils import configclass
 from isaaclab.assets import ArticulationCfg
+from isaaclab_physx.physics import PhysxCfg
 from . import mdp
 # use Isaac Lab native event system
 
@@ -40,7 +41,7 @@ class ObjectTableSceneCfg(TableRedGreenYellowBlockSceneCfg):
     # Humanoid robot w/ arms higher
     # 5. humanoid robot configuration 
     robot: ArticulationCfg = H12RobotPresets.h12_27dof_inspire_base_fix(init_pos=(-4.2, -3.7, 0.76),
-        init_rot=(0.7071, 0, 0, -0.7071))
+        init_rot=(0, 0, -0.7071, 0.7071))
 
 
     # 6. add camera configuration 
@@ -171,17 +172,19 @@ class StackRgyBlockH1227dofInspireBaseFixEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 32 * 1024
-        self.sim.physx.friction_correlation_distance = 0.003
-        self.sim.physx.enable_ccd = True
-        self.sim.physx.gpu_constraint_solver_heavy_spring_enabled = True
-        self.sim.physx.num_substeps = 4
-        self.sim.physx.contact_offset = 0.01
-        self.sim.physx.rest_offset = 0.001
-        self.sim.physx.num_position_iterations = 16
-        self.sim.physx.num_velocity_iterations = 4
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 32 * 1024
+        self.sim.physics.friction_correlation_distance = 0.003
+        self.sim.physics.enable_ccd = True
+        self.sim.physics.gpu_constraint_solver_heavy_spring_enabled = True
+        self.sim.physics.num_substeps = 4
+        self.sim.physics.contact_offset = 0.01
+        self.sim.physics.rest_offset = 0.001
+        self.sim.physics.num_position_iterations = 16
+        self.sim.physics.num_velocity_iterations = 4
         # create event manager
         self.event_manager = SimpleEventManager() 
 

@@ -17,6 +17,7 @@ from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.utils import configclass
 from isaaclab.assets import ArticulationCfg
 from isaaclab.sensors import ContactSensorCfg
+from isaaclab_physx.physics import PhysxCfg
 from . import mdp
 # use Isaac Lab native event system
 
@@ -40,7 +41,7 @@ class ObjectTableSceneCfg(TableCylinderSceneCfgWH):
     # Humanoid robot w/ arms higher
     # 5. humanoid robot configuration 
     robot: ArticulationCfg = G1RobotPresets.g1_29dof_inspire_wholebody(init_pos=(-3.9, -2.81811, 0.8),
-        init_rot=(1, 0, 0, 0))
+        init_rot=(0, 0, 0, 1))
 
     contact_forces = ContactSensorCfg(prim_path="/World/envs/env_.*/Robot/.*", history_length=10, track_air_time=True, debug_vis=False)
     # 6. add camera configuration 
@@ -147,10 +148,12 @@ class MoveCylinderG129InspireWholebodyEnvCfg(ManagerBasedRLEnvCfg):
         self.sim.dt = 0.005
         self.scene.contact_forces.update_period = self.sim.dt
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
-        self.sim.physx.friction_correlation_distance = 0.00625
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 16 * 1024
+        self.sim.physics.friction_correlation_distance = 0.00625
 
                 # 物理材料属性设置 / Physics material properties
         self.sim.physics_material.static_friction = 1.0  # 静摩擦系数 / Static friction

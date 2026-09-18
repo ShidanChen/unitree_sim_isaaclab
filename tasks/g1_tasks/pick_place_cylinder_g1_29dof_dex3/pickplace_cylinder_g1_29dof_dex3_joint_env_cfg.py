@@ -17,6 +17,7 @@ from isaaclab.managers import SceneEntityCfg
 from isaaclab.managers import TerminationTermCfg as DoneTerm
 from isaaclab.managers import RewardTermCfg as RewTerm
 from isaaclab.utils import configclass
+from isaaclab_physx.physics import PhysxCfg
 
 from . import mdp
 # use Isaac Lab native event system
@@ -152,10 +153,12 @@ class PickPlaceG129DEX3JointEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
-        self.sim.physx.friction_correlation_distance = 0.00625
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 16 * 1024
+        self.sim.physics.friction_correlation_distance = 0.00625
 
 
 

@@ -21,6 +21,7 @@ from isaaclab.utils import configclass
 from isaaclab.assets import ArticulationCfg, AssetBaseCfg, RigidObjectCfg
 from isaaclab.actuators.actuator_cfg import ImplicitActuatorCfg
 from isaaclab.sensors import ContactSensorCfg
+from isaaclab_physx.physics import PhysxCfg
 from . import mdp
 # use Isaac Lab native event system
 
@@ -410,7 +411,7 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
             # chassis from here when the assistant state machine is triggered.
             # About 1.70 m behind G1 while no object is being carried.
             pos=(-0.15, -1.80, 0.0328),
-            rot=(1.0, 0.0, 0.0, 0.0),
+            rot=(0.0, 0.0, 0.0, 1.0),
         ),
         actuators={
             "base_translation": ImplicitActuatorCfg(
@@ -439,7 +440,7 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
         ),
         init_state=AssetBaseCfg.InitialStateCfg(
             pos=(0.0, 0.0, 0.31),
-            rot=(1.0, 0.0, 0.0, 0.0),
+            rot=(0.0, 0.0, 0.0, 1.0),
         ),
     )
 
@@ -454,7 +455,7 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
         prim_path="/World/envs/env_.*/GauzeBox",
         init_state=RigidObjectCfg.InitialStateCfg(
             # Third item in the front 1x4 row.
-            pos=(-0.18, 0.40, 0.838), rot=(1.0, 0.0, 0.0, 0.0)
+            pos=(-0.18, 0.40, 0.838), rot=(0.0, 0.0, 0.0, 1.0)
         ),
         spawn=sim_utils.UsdFileCfg(
             usd_path=f"{project_root}/assets/objects/hospital_gauze_box.usda",
@@ -470,7 +471,7 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
         prim_path="/World/envs/env_.*/SpecimenCup",
         init_state=RigidObjectCfg.InitialStateCfg(
             # Second item in the front 1x4 row.
-            pos=(-0.43, 0.40, 0.845), rot=(1.0, 0.0, 0.0, 0.0)
+            pos=(-0.43, 0.40, 0.845), rot=(0.0, 0.0, 0.0, 1.0)
         ),
         spawn=sim_utils.UsdFileCfg(
             usd_path=f"{project_root}/assets/objects/hospital_specimen_cup.usda",
@@ -588,10 +589,12 @@ class PickPlaceG129DEX1BaseFixEnvCfg(ManagerBasedRLEnvCfg):
         # simulation settings
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 16 * 1024
-        self.sim.physx.friction_correlation_distance = 0.00625
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 16 * 1024
+        self.sim.physics.friction_correlation_distance = 0.00625
         # Hospital props must remain controllable in the Dex1 parallel jaws.
         # Use the stronger material in every contact pair and eliminate bounce.
         self.sim.physics_material.static_friction = 2.8
@@ -634,7 +637,7 @@ class ObjectTableWholebodySceneCfg(ObjectTableSceneCfg):
     robot: ArticulationCfg = G1RobotPresets.g1_29dof_dex1_wholebody(
         init_pos=(-0.15, -0.10, 0.8),
         # Preserve the task's calibrated +90-degree yaw toward the table.
-        init_rot=(0.7071, 0.0, 0.0, 0.7071),
+        init_rot=(0.0, 0.0, 0.7071, 0.7071),
     )
     contact_forces = ContactSensorCfg(
         prim_path="/World/envs/env_.*/Robot/.*",

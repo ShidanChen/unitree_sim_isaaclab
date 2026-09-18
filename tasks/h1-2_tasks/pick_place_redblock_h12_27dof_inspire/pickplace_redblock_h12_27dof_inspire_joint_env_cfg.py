@@ -23,6 +23,7 @@ from tasks.common_config import  H12RobotPresets, CameraPresets  # isort: skip
 # import public scene configuration
 import isaaclab.sim as sim_utils
 from isaaclab.assets import RigidObjectCfg
+from isaaclab_physx.physics import PhysxCfg
 from tasks.common_scene.base_scene_randomized_pickplace_cfg import RandomizedRoomPickPlaceSceneCfg
 from tasks.utils.room_randomizer import randomize_pickplace_room_layout
 from tasks.utils.room_randomizer.constants import ROOM_X_MAX, ROOM_X_MIN, ROOM_Y_MAX, ROOM_Y_MIN
@@ -46,7 +47,7 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
     
     object = RigidObjectCfg(
         prim_path="/World/envs/env_.*/Object",
-        init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.35, 0.40, 0.84), rot=(1, 0, 0, 0)),
+        init_state=RigidObjectCfg.InitialStateCfg(pos=(-0.35, 0.40, 0.84), rot=(0, 0, 0, 1)),
         spawn=sim_utils.CuboidCfg(
             size=(0.06, 0.06, 0.06),
             rigid_props=sim_utils.RigidBodyPropertiesCfg(
@@ -73,7 +74,7 @@ class ObjectTableSceneCfg(RandomizedRoomPickPlaceSceneCfg):
     # Humanoid robot w/ arms higher
     # 5. humanoid robot configuration 
     robot: ArticulationCfg = H12RobotPresets.h12_27dof_inspire_base_fix(init_pos=(-4.2, -3.7, 0.76),
-        init_rot=(0.7071, 0, 0, -0.7071))
+        init_rot=(0, 0, -0.7071, 0.7071))
 
 
     # 6. add camera configuration 
@@ -181,17 +182,19 @@ class PickPlaceH1227dofInspireHandBaseFixEnvCfg(ManagerBasedRLEnvCfg):
         self.episode_length_s = 20.0
         self.sim.dt = 0.005
         self.sim.render_interval = self.decimation
-        self.sim.physx.bounce_threshold_velocity = 0.01
-        self.sim.physx.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
-        self.sim.physx.gpu_total_aggregate_pairs_capacity = 32 * 1024
-        self.sim.physx.friction_correlation_distance = 0.003
-        self.sim.physx.enable_ccd = True
-        self.sim.physx.gpu_constraint_solver_heavy_spring_enabled = True
-        self.sim.physx.num_substeps = 2
-        self.sim.physx.contact_offset = 0.015
-        self.sim.physx.rest_offset = 0.001
-        self.sim.physx.num_position_iterations = 12
-        self.sim.physx.num_velocity_iterations = 4
+        if self.sim.physics is None:
+            self.sim.physics = PhysxCfg()
+        self.sim.physics.bounce_threshold_velocity = 0.01
+        self.sim.physics.gpu_found_lost_aggregate_pairs_capacity = 1024 * 1024 * 4
+        self.sim.physics.gpu_total_aggregate_pairs_capacity = 32 * 1024
+        self.sim.physics.friction_correlation_distance = 0.003
+        self.sim.physics.enable_ccd = True
+        self.sim.physics.gpu_constraint_solver_heavy_spring_enabled = True
+        self.sim.physics.num_substeps = 2
+        self.sim.physics.contact_offset = 0.015
+        self.sim.physics.rest_offset = 0.001
+        self.sim.physics.num_position_iterations = 12
+        self.sim.physics.num_velocity_iterations = 4
 
         # create event manager
         register_randomized_room_reset_events(self)

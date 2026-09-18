@@ -1091,8 +1091,14 @@ def _make_table_group_from_table(
 
 
 def _quat_wxyz_yaw(quat: torch.Tensor) -> float:
-    """Return Z-axis yaw from one Isaac Lab ``(w, x, y, z)`` quaternion."""
-    w, x, y, z = (float(value) for value in quat)
+    """Return Z-axis yaw from one Isaac Lab ``(x, y, z, w)`` quaternion.
+
+    Isaac Lab 3.0 changed the quaternion component order from (w, x, y, z) to
+    (x, y, z, w); this function's name/callers predate that change but the
+    tensors passed in (root_quat_w, default_root_state[3:7]) are already in
+    the new order.
+    """
+    x, y, z, w = (float(value) for value in quat)
     return math.atan2(2.0 * (w * z + x * y), 1.0 - 2.0 * (y * y + z * z))
 
 
