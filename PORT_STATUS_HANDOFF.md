@@ -16,6 +16,60 @@ Goal: get the G1 Dex1 Meta Quest teleoperation stack (`core_unitree_sim_isaaclab
 
 Isaac Sim 5.1 segfaults on this machine (`librtx.scenedb.plugin.so` crash in `carbOnPluginStartup`) — a known NVIDIA issue: driver 595.84 isn't validated for Isaac Sim 5.1's RTX plugin on Blackwell (`sm_120`) GPUs. Confirmed via GitHub issues #619/#643 and NVIDIA dev forums. Isaac Sim 6.1 boots cleanly on this same driver/GPU.
 
+## Setup & run on a new machine
+
+The code itself has no hardcoded machine-specific paths (`sim_main.py` resolves
+`PROJECT_ROOT` dynamically from its own location; all other paths come from
+CLI args or environment variables). To run this on a different machine, set
+these environment variables for your own setup — no source edits required:
+
+| Variable | Meaning | Example |
+|---|---|---|
+| `ISAAC_SIM_VENV` | Path to your Isaac Sim 6.1 Python venv | `/opt/isaac-sim-6.1/venv` |
+| `UNITREE_DDS_NETWORK_INTERFACE` | Your machine's network interface name (`ip a` to list) | `eth0`, `wlan0`, or `lo` for local-only testing with no real Quest |
+| `CYCLONEDDS_HOME` | Path to your CycloneDDS install (same version, see below, on both the sim and bridge side) | `/opt/cyclonedds/install` |
+| `--img-server-ip` (bridge CLI arg) | This machine's own LAN IP (what the Quest headset connects to) | `192.168.1.50` |
+
+Requirements (see "What's installed" above for the versions that were
+verified together):
+1. Isaac Sim 6.1.0 + Isaac Lab 3.0.0, installed per NVIDIA's official docs.
+2. A `cyclonedds` Python binding whose version matches the C library it's
+   linked against on **both** the sim venv and the XR bridge's Python env —
+   mismatched versions cause `DDS_RETCODE_PRECONDITION_NOT_MET` (see fix #9
+   below). The simplest fix: `pip install "cyclonedds==11.0.1" --force-reinstall --only-binary=:all:`
+   in both environments (a self-contained prebuilt wheel, not a version that
+   needs matching against a separately-compiled C library).
+3. The `xr_teleoperate` bridge checkout matching your task (the hospital
+   task needs the hospital-specific button-mapping fork, not upstream
+   `unitree_sim_isaaclab`'s plain `xr_teleoperate`).
+
+Example run (substitute your own values for the placeholders above):
+
+```bash
+# Terminal 1 — simulator
+cd core_unitree_sim_isaaclab_main_isaac61
+export OMNI_KIT_ACCEPT_EULA=YES
+export UNITREE_DDS_NETWORK_INTERFACE=<your-interface>
+"$ISAAC_SIM_VENV/bin/python" sim_main.py \
+  --device cuda:0 --visualizer kit --meta_quest \
+  --experience isaacsim.exp.full.kit \
+  --task Isaac-PickPlace-MedicineBottle-Hospital-G129-Dex1-Joint
+
+# Terminal 2 — XR bridge (run inside a real PTY/tmux, not backgrounded —
+# the keyboard listener needs a real terminal)
+source /path/to/your/conda/etc/profile.d/conda.sh && conda activate <your-env>
+export CYCLONEDDS_HOME=<your-cyclonedds-install>
+export LD_LIBRARY_PATH="$CYCLONEDDS_HOME/lib:${LD_LIBRARY_PATH:-}"
+export DDS_DOMAIN_ID=1
+cd xr_teleoperate_hospital_main/teleop
+python -u teleop_hand_and_arm.py --input-mode=controller --arm=G1_29 --ee=dex1 \
+  --sim --img-server-ip=<your-machine-ip> --network-interface=<your-interface>
+```
+
+Then open `https://<your-machine-ip>:8012/?ws=wss://<your-machine-ip>:8012` in
+the Quest browser, accept the self-signed cert warning, enter VR, and press
+`r` in the bridge terminal once connected.
+
 ## Fixes applied to get `sim_main.py` running on Isaac Lab 3.0 (all in `core_unitree_sim_isaaclab_main_isaac61`)
 
 1. **`--headless` CLI flag removed** by Isaac Lab 3.0 — AppLauncher no longer registers it. Fix: use `HEADLESS=1` env var instead. (`sim_main.py` didn't need code changes, just invocation.)
